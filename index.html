@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invitacion Hacker Romantica</title>
+  <style>
+    :root {
+      --color-fondo: #050506;
+      --color-card: rgba(15, 15, 15, 0.9);
+      --color-card-suave: rgba(255, 77, 109, 0.12);
+      --color-principal: #ff4d6d;
+      --color-principal-oscuro: #c9184a;
+      --color-texto: #f5f5f5;
+      --color-texto-suave: #cfcfcf;
+      --color-error: #ff2d55;
+      --sombra-rosa: 0 0 28px rgba(255, 77, 109, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--color-fondo);
+      color: var(--color-texto);
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    #matrixCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background: radial-gradient(circle at center, rgba(80, 0, 22, 0.55), #050506 68%);
+    }
+
+    .velo {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(rgba(255, 77, 109, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 77, 109, 0.03) 1px, transparent 1px),
+        rgba(0, 0, 0, 0.2);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    main {
+      width: min(100%, 760px);
+    }
+
+    .pantalla {
+      display: none;
+      width: 100%;
+      animation: aparecer 450ms ease both;
+    }
+
+    .pantalla.activa {
+      display: block;
+    }
+
+    .card {
+      width: 100%;
+      padding: clamp(24px, 5vw, 46px);
+      border: 2px dashed rgba(255, 77, 109, 0.9);
+      border-radius: 20px;
+      background: var(--color-card);
+      box-shadow: var(--sombra-rosa), inset 0 0 42px rgba(255, 77, 109, 0.08);
+      backdrop-filter: blur(5px);
+      text-align: center;
+    }
+
+    .icono-principal {
+      display: block;
+      margin-bottom: 14px;
+      font-size: clamp(48px, 12vw, 84px);
+      filter: drop-shadow(0 0 14px rgba(255, 77, 109, 0.85));
+    }
+
+    h1 {
+      margin: 0 0 22px;
+      color: var(--color-texto);
+      font-size: clamp(1.55rem, 5vw, 2.55rem);
+      line-height: 1.18;
+      letter-spacing: 0;
+      text-shadow: 0 0 14px rgba(255, 77, 109, 0.6);
+    }
+
+    p {
+      margin: 12px 0;
+      color: var(--color-texto-suave);
+      font-size: clamp(1rem, 3vw, 1.15rem);
+      line-height: 1.6;
+    }
+
+    .campo {
+      width: 100%;
+      margin: 12px 0 16px;
+      padding: 15px 16px;
+      border: 1px solid rgba(255, 77, 109, 0.78);
+      border-radius: 12px;
+      outline: none;
+      background: rgba(0, 0, 0, 0.72);
+      color: var(--color-texto);
+      font: inherit;
+      box-shadow: inset 0 0 14px rgba(255, 77, 109, 0.14);
+      transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+    }
+
+    .campo:focus {
+      border-color: #ffb3c1;
+      box-shadow: 0 0 18px rgba(255, 77, 109, 0.35), inset 0 0 14px rgba(255, 77, 109, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .boton {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      margin-top: 8px;
+      padding: 13px 22px;
+      border: 1px solid var(--color-principal);
+      border-radius: 12px;
+      background: rgba(255, 77, 109, 0.16);
+      color: var(--color-texto);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: transform 220ms ease, background 220ms ease, color 220ms ease, box-shadow 220ms ease;
+    }
+
+    .boton:hover:not(:disabled),
+    .boton:focus-visible:not(:disabled) {
+      background: var(--color-principal);
+      color: #120006;
+      box-shadow: 0 0 22px rgba(255, 77, 109, 0.72);
+      transform: translateY(-2px);
+    }
+
+    .boton:disabled {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.38);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .mensaje-error {
+      min-height: 26px;
+      margin: 8px 0 0;
+      color: var(--color-error);
+      font-weight: 700;
+      text-shadow: 0 0 12px rgba(255, 45, 85, 0.65);
+    }
+
+    .grid-opciones {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 26px 0 18px;
+    }
+
+    .opcion {
+      min-height: 128px;
+      padding: 18px 14px;
+      border: 1px solid rgba(255, 77, 109, 0.72);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.58);
+      color: var(--color-texto);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1.35;
+      transition: transform 220ms ease, background 220ms ease, color 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .opcion:hover,
+    .opcion:focus-visible {
+      border-color: #ffb3c1;
+      box-shadow: 0 0 20px rgba(255, 77, 109, 0.34);
+      transform: translateY(-3px);
+    }
+
+    .opcion.seleccionada {
+      border-color: #ffccd5;
+      background: linear-gradient(135deg, #ff4d6d, #ff8fa3);
+      color: #150008;
+      box-shadow: 0 0 26px rgba(255, 77, 109, 0.72);
+    }
+
+    .lista-horas {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 28px 0 18px;
+    }
+
+    .hora {
+      position: relative;
+      min-height: 64px;
+      border: 1px solid rgba(255, 77, 109, 0.72);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.58);
+      cursor: pointer;
+      transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .hora input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .hora span {
+      display: grid;
+      width: 100%;
+      min-height: 64px;
+      place-items: center;
+      padding: 12px;
+      color: var(--color-texto);
+      font-weight: 700;
+    }
+
+    .hora:hover,
+    .hora:focus-within {
+      border-color: #ffb3c1;
+      box-shadow: 0 0 20px rgba(255, 77, 109, 0.34);
+      transform: translateY(-2px);
+    }
+
+    .hora:has(input:checked) {
+      border-color: #ffccd5;
+      background: linear-gradient(135deg, #ff4d6d, #ff8fa3);
+      box-shadow: 0 0 26px rgba(255, 77, 109, 0.72);
+    }
+
+    .hora:has(input:checked) span {
+      color: #150008;
+    }
+
+    .resultado {
+      color: #ffccd5;
+    }
+
+    .gif-romantico {
+      display: block;
+      width: min(100%, 340px);
+      aspect-ratio: 1 / 1;
+      margin: 24px auto 0;
+      border: 2px solid rgba(255, 77, 109, 0.82);
+      border-radius: 18px;
+      object-fit: cover;
+      box-shadow: 0 0 24px rgba(255, 77, 109, 0.48);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .boton-whatsapp {
+      width: min(100%, 420px);
+      margin-top: 22px;
+      border-color: #ffccd5;
+      background: linear-gradient(135deg, #ff4d6d, #ff8fa3);
+      color: #150008;
+      text-decoration: none;
+      box-shadow: 0 0 24px rgba(255, 77, 109, 0.58);
+    }
+
+    .boton-whatsapp:hover,
+    .boton-whatsapp:focus-visible {
+      background: linear-gradient(135deg, #ff8fa3, #ff4d6d);
+      color: #150008;
+      box-shadow: 0 0 34px rgba(255, 77, 109, 0.82);
+    }
+
+    @keyframes aparecer {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px;
+      }
+
+      .card {
+        border-radius: 16px;
+      }
+
+      .grid-opciones,
+      .lista-horas {
+        grid-template-columns: 1fr;
+      }
+
+      .opcion {
+        min-height: 82px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrixCanvas" aria-hidden="true"></canvas>
+  <div class="velo" aria-hidden="true"></div>
+
+  <main>
+    <section id="pantallaLogin" class="pantalla activa">
+      <div class="card">
+        <span class="icono-principal" aria-hidden="true">🔒</span>
+        <h1>Esto se desbloquea con tu nombre</h1>
+        <form id="formularioLogin" autocomplete="off">
+          <input
+            id="entradaNombre"
+            class="campo"
+            type="text"
+            placeholder="Escribe tu nombre..."
+            aria-label="Nombre para desbloquear la invitacion"
+          />
+          <button class="boton" type="submit">Entrar</button>
+          <p id="mensajeLogin" class="mensaje-error" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="pantallaActividad" class="pantalla">
+      <div class="card">
+        <h1>Feliz aniversario. Elige nuestra cita ideal 👇</h1>
+        <div class="grid-opciones" aria-label="Opciones de cita">
+          <button class="opcion" type="button" data-actividad="Ir al cine">🍿 Ir al cine</button>
+          <button class="opcion" type="button" data-actividad="Algo random">🎲 Algo random</button>
+          <button class="opcion" type="button" data-actividad="Almuercito">🍲 Almuercito</button>
+        </div>
+        <button id="botonConfirmarPlan" class="boton" type="button" disabled>Confirmar Plan</button>
+      </div>
+    </section>
+
+    <section id="pantallaHorario" class="pantalla">
+      <div class="card">
+        <h1>¿A qué hora puedes estar lista?</h1>
+        <form id="formularioHora">
+          <div class="lista-horas">
+            <label class="hora">
+              <input type="radio" name="hora" value="5 pm" />
+              <span>5 pm</span>
+            </label>
+            <label class="hora">
+              <input type="radio" name="hora" value="6 pm" />
+              <span>6 pm</span>
+            </label>
+            <label class="hora">
+              <input type="radio" name="hora" value="7 pm" />
+              <span>7 pm</span>
+            </label>
+            <label class="hora">
+              <input type="radio" name="hora" value="8 pm" />
+              <span>8 pm</span>
+            </label>
+          </div>
+          <button class="boton" type="submit">Confirmar Hora</button>
+          <p id="mensajeHora" class="mensaje-error" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="pantallaFinal" class="pantalla">
+      <div class="card">
+        <h1 id="tituloFinal" class="resultado">¡Perfecto!</h1>
+        <p>📍 Dirección: Tu casa (pasaré por ti)</p>
+        <img
+          class="gif-romantico"
+          src="https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif"
+          alt="GIF animado romantico"
+        />
+        <a
+          id="botonWhatsApp"
+          class="boton boton-whatsapp"
+          href="https://wa.me/593997317179?text="
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Enviar confirmación por WhatsApp 📲
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // =============================
+    // Configuracion principal
+    // =============================
+    const NOMBRE_VALIDO = "sofia";
+
+    const estadoInvitacion = {
+      actividadSeleccionada: "",
+      horaSeleccionada: ""
+    };
+
+    const pantallas = {
+      login: document.getElementById("pantallaLogin"),
+      actividad: document.getElementById("pantallaActividad"),
+      horario: document.getElementById("pantallaHorario"),
+      final: document.getElementById("pantallaFinal")
+    };
+
+    const formularioLogin = document.getElementById("formularioLogin");
+    const entradaNombre = document.getElementById("entradaNombre");
+    const mensajeLogin = document.getElementById("mensajeLogin");
+    const opcionesActividad = document.querySelectorAll(".opcion");
+    const botonConfirmarPlan = document.getElementById("botonConfirmarPlan");
+    const formularioHora = document.getElementById("formularioHora");
+    const mensajeHora = document.getElementById("mensajeHora");
+    const tituloFinal = document.getElementById("tituloFinal");
+    const botonWhatsApp = document.getElementById("botonWhatsApp");
+
+    function normalizarTexto(texto) {
+      return texto
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function mostrarPantalla(nombrePantalla) {
+      Object.values(pantallas).forEach(function (pantalla) {
+        pantalla.classList.remove("activa");
+      });
+
+      pantallas[nombrePantalla].classList.add("activa");
+    }
+
+    // =============================
+    // Paso 1: desbloqueo por nombre
+    // =============================
+    formularioLogin.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+
+      const nombreIngresado = normalizarTexto(entradaNombre.value);
+      const nombreEsperado = normalizarTexto(NOMBRE_VALIDO);
+
+      if (nombreIngresado !== nombreEsperado) {
+        mensajeLogin.textContent = "Acceso denegado: ese nombre no abre mi corazon.exe";
+        entradaNombre.focus();
+        return;
+      }
+
+      mensajeLogin.textContent = "";
+      mostrarPantalla("actividad");
+    });
+
+    // =============================
+    // Paso 2: seleccion de actividad
+    // =============================
+    opcionesActividad.forEach(function (opcion) {
+      opcion.addEventListener("click", function () {
+        opcionesActividad.forEach(function (otraOpcion) {
+          otraOpcion.classList.remove("seleccionada");
+        });
+
+        opcion.classList.add("seleccionada");
+        estadoInvitacion.actividadSeleccionada = opcion.dataset.actividad;
+        botonConfirmarPlan.disabled = false;
+      });
+    });
+
+    botonConfirmarPlan.addEventListener("click", function () {
+      if (!estadoInvitacion.actividadSeleccionada) {
+        return;
+      }
+
+      mostrarPantalla("horario");
+    });
+
+    // =============================
+    // Paso 3: seleccion de horario
+    // =============================
+    formularioHora.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+
+      const horaMarcada = document.querySelector('input[name="hora"]:checked');
+
+      if (!horaMarcada) {
+        mensajeHora.textContent = "Selecciona una hora para sincronizar nuestros relojes.";
+        return;
+      }
+
+      estadoInvitacion.horaSeleccionada = horaMarcada.value;
+      mensajeHora.textContent = "";
+      tituloFinal.textContent = "¡Perfecto! Nos vemos a las "
+        + estadoInvitacion.horaSeleccionada
+        + " para "
+        + estadoInvitacion.actividadSeleccionada;
+
+      const mensajeWhatsApp = "¡Hola! Ya elegí: "
+        + estadoInvitacion.actividadSeleccionada
+        + " a las "
+        + estadoInvitacion.horaSeleccionada
+        + " 🤭";
+
+      botonWhatsApp.href = "https://wa.me/593997317179?text=" + encodeURIComponent(mensajeWhatsApp);
+
+      mostrarPantalla("final");
+    });
+
+    // =============================
+    // Animacion Matrix romantica
+    // =============================
+    const canvas = document.getElementById("matrixCanvas");
+    const contexto = canvas.getContext("2d");
+    const caracteres = ["0", "1", "♥"];
+    const colores = ["#ff4d6d", "#ff758f", "#c9184a", "#ffccd5"];
+    const tamanoFuente = 18;
+    let columnas = 0;
+    let gotas = [];
+
+    function ajustarCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      columnas = Math.floor(canvas.width / tamanoFuente);
+      gotas = [];
+
+      for (let indice = 0; indice < columnas; indice += 1) {
+        gotas[indice] = Math.floor(Math.random() * canvas.height / tamanoFuente);
+      }
+    }
+
+    function obtenerElementoAleatorio(lista) {
+      const indiceAleatorio = Math.floor(Math.random() * lista.length);
+      return lista[indiceAleatorio];
+    }
+
+    function dibujarMatrixRomantico() {
+      contexto.fillStyle = "rgba(5, 5, 6, 0.12)";
+      contexto.fillRect(0, 0, canvas.width, canvas.height);
+      contexto.font = tamanoFuente + "px Courier New, monospace";
+      contexto.textAlign = "center";
+
+      gotas.forEach(function (posicionY, indice) {
+        const texto = obtenerElementoAleatorio(caracteres);
+        const posicionX = indice * tamanoFuente;
+
+        contexto.fillStyle = obtenerElementoAleatorio(colores);
+        contexto.shadowColor = "rgba(255, 77, 109, 0.9)";
+        contexto.shadowBlur = 10;
+        contexto.fillText(texto, posicionX, posicionY * tamanoFuente);
+
+        if (posicionY * tamanoFuente > canvas.height && Math.random() > 0.975) {
+          gotas[indice] = 0;
+        } else {
+          gotas[indice] = posicionY + 1;
+        }
+      });
+
+      window.requestAnimationFrame(dibujarMatrixRomantico);
+    }
+
+    window.addEventListener("resize", ajustarCanvas);
+    ajustarCanvas();
+    dibujarMatrixRomantico();
+  </script>
+</body>
+</html>
