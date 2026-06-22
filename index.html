@@ -395,7 +395,7 @@
         <a
           id="botonWhatsApp"
           class="boton boton-whatsapp"
-          href="https://wa.me/593997317179?text="
+          href="#" 
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -409,7 +409,9 @@
     // =============================
     // Configuracion principal
     // =============================
-    const NOMBRE_VALIDO = "sofia";
+    const NOMBRE_VALIDO = "sofia"; 
+    // NOTA: Reemplazar las 'X' con el código de país y número de teléfono (ej. 593987654321)
+    const NUMERO_WHATSAPP = "XXXXXXXXXX"; 
 
     const estadoInvitacion = {
       actividadSeleccionada: "",
@@ -517,7 +519,8 @@
         + estadoInvitacion.horaSeleccionada
         + " 🤭";
 
-      botonWhatsApp.href = "https://wa.me/593997317179?text=" + encodeURIComponent(mensajeWhatsApp);
+      // Usando la variable NUMERO_WHATSAPP definida en la configuración principal
+      botonWhatsApp.href = "https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(mensajeWhatsApp);
 
       mostrarPantalla("final");
     });
